@@ -257,7 +257,7 @@ task.spawn(function()
                             local pendingNum = en.toNumber(en.convert(gainResetValObj.Value))
                             if pendingNum >= currentSettings.MinConvertLambda then
                                 print("[EverythingUpg] Auto Converting at pending Lambda:", pendingNum)
-                                ReplicatedStorage.remotes.research_convert:FireServer()
+                                ReplicatedStorage.remotes.research_convert:FireServer(true)
                                 lastUpgradeTime = tick()
                                 actionTaken = true
                                 task.wait(0.5)
