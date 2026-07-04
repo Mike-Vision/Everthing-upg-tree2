@@ -21,7 +21,7 @@ end
 
 -- Load Subsystems from GitHub
 local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
-local Farm = loadstring(game.HttpGet(game, githubRepo .. "src/main.lua"))()
+local Farm = loadstring(game.HttpGet(game, githubRepo .. "src/main.lua?t=" .. os.time()))()
 getgenv().EverythingUpgFarm = Farm -- Cache Farm globally for transparency/debugging
 
 -- Shortcut reference to settings values

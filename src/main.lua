@@ -5,9 +5,9 @@ local TweenService = game:GetService("TweenService")
 
 -- Load Submodules from GitHub
 local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
-local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua"))()
-local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua"))()
-local CheckUpdate = loadstring(game.HttpGet(game, githubRepo .. "src/CheckUpdate.lua"))()
+local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua?t=" .. os.time()))()
+local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua?t=" .. os.time()))()
+local CheckUpdate = loadstring(game.HttpGet(game, githubRepo .. "src/CheckUpdate.lua?t=" .. os.time()))()
 
 -- Attempt to load saved settings
 Settings.load()

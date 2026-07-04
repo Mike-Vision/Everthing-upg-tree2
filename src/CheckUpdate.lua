@@ -7,7 +7,7 @@ function CheckUpdate.start(currentVersion, Library)
             local success, err = pcall(function()
                 local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
                 -- Dùng safe index call để tránh bug namecall treo game:HttpGet trên Madium
-                local settingsContent = game.HttpGet(game, githubRepo .. "src/settings.lua")
+                local settingsContent = game.HttpGet(game, githubRepo .. "src/settings.lua?t=" .. os.time())
                 if settingsContent then
                     local githubVersion = settingsContent:match('SettingsModule%.Version%s*=%s*"([%d%.]+)"')
                     if githubVersion and githubVersion ~= currentVersion then
@@ -24,7 +24,7 @@ function CheckUpdate.start(currentVersion, Library)
                         task.wait(1)
                         
                         -- Tải và chạy loader mới nhất từ GitHub
-                        loadstring(game.HttpGet(game, githubRepo .. "loader.lua"))()
+                        loadstring(game.HttpGet(game, githubRepo .. "loader.lua?t=" .. os.time()))()
                     end
                 end
             end)
