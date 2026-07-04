@@ -45,12 +45,14 @@ getgenv().Linoria_Window = Window
 -- Create Tabs
 local Tabs = {
     Farm = Window:AddTab("Farming"),
+    Anti = Window:AddTab("Anti"),
     Status = Window:AddTab("Status")
 }
 
 -- Create Groupboxes
 local FarmGroup = Tabs.Farm:AddLeftGroupbox("⚡ Auto Farm Settings")
 local ResearchGroup = Tabs.Farm:AddRightGroupbox("🔬 Research Center Settings")
+local AntiGroup = Tabs.Anti:AddLeftGroupbox("🛡️ Security & Anti-Cheat Bypass")
 local StatusGroup = Tabs.Status:AddLeftGroupbox("📊 Player Status")
 local AdminGroup = Tabs.Status:AddRightGroupbox("⚙️ Admin Settings")
 
@@ -165,6 +167,51 @@ local pointsLabel = StatusGroup:AddLabel("Points: --")
 local lambdaLabel = StatusGroup:AddLabel("Lambda (λ): --")
 local pendingLambdaLabel = StatusGroup:AddLabel("Pending Lambda: --")
 local tokenStatusLabel = StatusGroup:AddLabel("Token Status: Scanning...")
+
+-- Anti-Cheat & Protection Settings
+local AntiCheatToggle = AntiGroup:AddToggle("DisableAntiCheatToggle", {
+    Text = "Disable Anti-Cheat",
+    Default = SettingsValues.DisableAntiCheat,
+    Tooltip = "Block client diagnostics and exploit reporting to the server"
+})
+AntiCheatToggle:OnChanged(function(val)
+    SettingsValues.DisableAntiCheat = val
+    print("[EverythingUpg UI] Set DisableAntiCheat =", val)
+    Farm.Settings.save()
+end)
+
+local AntiKickToggle = AntiGroup:AddToggle("AntiKickToggle", {
+    Text = "Anti-Kick",
+    Default = SettingsValues.AntiKick,
+    Tooltip = "Bypass client-side kick requests from local scripts"
+})
+AntiKickToggle:OnChanged(function(val)
+    SettingsValues.AntiKick = val
+    print("[EverythingUpg UI] Set AntiKick =", val)
+    Farm.Settings.save()
+end)
+
+local AntiAFKToggle = AntiGroup:AddToggle("AntiAFKToggle", {
+    Text = "Anti-AFK",
+    Default = SettingsValues.AntiAFK,
+    Tooltip = "Prevent getting kicked for idling after 20 minutes"
+})
+AntiAFKToggle:OnChanged(function(val)
+    SettingsValues.AntiAFK = val
+    print("[EverythingUpg UI] Set AntiAFK =", val)
+    Farm.Settings.save()
+end)
+
+local ModDetectToggle = AntiGroup:AddToggle("ModDetectToggle", {
+    Text = "Moderator Detection",
+    Default = SettingsValues.ModDetection,
+    Tooltip = "Instantly exit/kick when another player joins your private server"
+})
+ModDetectToggle:OnChanged(function(val)
+    SettingsValues.ModDetection = val
+    print("[EverythingUpg UI] Set ModDetection =", val)
+    Farm.Settings.save()
+end)
 
 -- 5. Admin Settings (Unload Button)
 local UnloadButton = AdminGroup:AddButton({

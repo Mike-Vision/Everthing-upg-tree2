@@ -3,7 +3,7 @@ local HttpService = game:GetService("HttpService")
 local SettingsModule = {}
 
 local defaultSettings = {
-    Version = "2.6",
+    Version = "2.7",
     AutoUpgrade = false,
     UpgradeDelay = 0.5,
     BatchSize = 10,
@@ -12,11 +12,15 @@ local defaultSettings = {
     MinConvertLambda = 10,
     AutoClickXP = false,
     XPClickDelay = 0.05,
-    TokenStatus = "Scanning..."
+    TokenStatus = "Scanning...",
+    DisableAntiCheat = false,
+    AntiKick = false,
+    AntiAFK = false,
+    ModDetection = false
 }
 
 SettingsModule.Values = {}
-SettingsModule.Version = "2.6"
+SettingsModule.Version = "2.7"
 
 -- Initialize with defaults
 for k, v in pairs(defaultSettings) do

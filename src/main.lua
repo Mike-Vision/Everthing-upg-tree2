@@ -3,6 +3,14 @@ local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
+-- Load Submodules from GitHub
+local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
+local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua"))()
+local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua"))()
+
+-- Attempt to load saved settings
+Settings.load()
+
 -- Hook metatable functions to bypass client kick and report remotes safely
 local successHook, hookErr = pcall(function()
     if hookmetamethod then
@@ -12,17 +20,21 @@ local successHook, hookErr = pcall(function()
             local args = {...}
             
             -- Block client-side Kick requests safely
-            if typeof(self) == "Instance" and self == LocalPlayer and (method == "Kick" or method == "kick") then
-                warn("[EverythingUpg Anti-Kick] Blocked client namecall kick. Reason:", tostring(args[1]))
-                return nil
+            if Settings and Settings.Values and Settings.Values.AntiKick then
+                if typeof(self) == "Instance" and self == LocalPlayer and (method == "Kick" or method == "kick") then
+                    warn("[EverythingUpg Anti-Kick] Blocked client namecall kick. Reason:", tostring(args[1]))
+                    return nil
+                end
             end
             
             -- Block diagnostics reporting remotes safely
-            if typeof(self) == "Instance" then
-                local selfName = tostring(self)
-                if (selfName == "diagnostics_event" or selfName == "hyperfail" or selfName == "offline_report" or selfName == "kick") and method == "FireServer" then
-                    warn("[EverythingUpg Security] Blocked server report remote:", selfName)
-                    return nil
+            if Settings and Settings.Values and Settings.Values.DisableAntiCheat then
+                if typeof(self) == "Instance" then
+                    local selfName = tostring(self)
+                    if (selfName == "diagnostics_event" or selfName == "hyperfail" or selfName == "offline_report" or selfName == "kick") and method == "FireServer" then
+                        warn("[EverythingUpg Security] Blocked server report remote:", selfName)
+                        return nil
+                    end
                 end
             end
             
@@ -31,11 +43,13 @@ local successHook, hookErr = pcall(function()
 
         local oldIndex
         oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if typeof(self) == "Instance" and self == LocalPlayer and (tostring(key):lower() == "kick") then
-                return function(...)
-                    local args = {...}
-                    warn("[EverythingUpg Anti-Kick] Blocked client index kick. Reason:", tostring(args[2]))
-                    return nil
+            if Settings and Settings.Values and Settings.Values.AntiKick then
+                if typeof(self) == "Instance" and self == LocalPlayer and (tostring(key):lower() == "kick") then
+                    return function(...)
+                        local args = {...}
+                        warn("[EverythingUpg Anti-Kick] Blocked client index kick. Reason:", tostring(args[2]))
+                        return nil
+                    end
                 end
             end
             return oldIndex(self, key)
@@ -46,13 +60,42 @@ local successHook, hookErr = pcall(function()
     end
 end)
 
--- Load Submodules from GitHub
-local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
-local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua"))()
-local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua"))()
+-- Anti-AFK Setup
+local vu = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+    if Settings and Settings.Values and Settings.Values.AntiAFK then
+        pcall(function()
+            vu:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        end)
+    end
+end)
 
--- Attempt to load saved settings
-Settings.load()
+-- Moderator / Player Detection Setup
+local function checkPlayers()
+    if Settings and Settings.Values and Settings.Values.ModDetection then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                LocalPlayer:Kick("Security: Another player detected in your private session.")
+                break
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    task.wait(0.5)
+    if Settings and Settings.Values and Settings.Values.ModDetection and p ~= LocalPlayer then
+        LocalPlayer:Kick("Security: Player " .. p.Name .. " joined your private session.")
+    end
+end)
+
+task.spawn(function()
+    while task.wait(3) do
+        checkPlayers()
+    end
+end)
 
 local en = require(ReplicatedStorage.modules.en)
 
