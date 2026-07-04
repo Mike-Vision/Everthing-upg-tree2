@@ -155,6 +155,8 @@ task.spawn(function()
         if currentSettings.AutoUpgrade or currentSettings.AutoResearch or currentSettings.AutoConvert then
             local token = Resources.getSessionToken(currentSettings)
             if token then
+                local actionTaken = false
+                
                 -- 1. AUTO CONVERT (PRESTIGE)
                 if currentSettings.AutoConvert and tick() - lastUpgradeTime >= currentSettings.UpgradeDelay then
                     pcall(function()
@@ -173,6 +175,7 @@ task.spawn(function()
                                     print("[EverythingUpg] Auto Converting at pending Lambda:", pendingNum)
                                     ReplicatedStorage.remotes.research_convert:FireServer()
                                     lastUpgradeTime = tick()
+                                    actionTaken = true
                                     task.wait(0.5)
                                 end
                             end
@@ -181,7 +184,7 @@ task.spawn(function()
                 end
                 
                 -- 2. AUTO POINT UPGRADES (Sequential and physics-matching)
-                if currentSettings.AutoUpgrade and tick() - lastUpgradeTime >= currentSettings.UpgradeDelay then
+                if not actionTaken and currentSettings.AutoUpgrade and tick() - lastUpgradeTime >= currentSettings.UpgradeDelay then
                     local upgradesFolder = workspace:FindFirstChild("upgrades")
                     if upgradesFolder then
                         local rawList = upgradesFolder:GetChildren()
@@ -316,6 +319,7 @@ task.spawn(function()
                                 ReplicatedStorage.remotes.upgrade:FireServer(upgName, token)
                                 
                                 lastUpgradeTime = tick()
+                                actionTaken = true
                                 -- Wait for server replication
                                 task.wait(0.2)
                                 
@@ -335,7 +339,7 @@ task.spawn(function()
                 end
                 
                 -- 3. AUTO RESEARCH UPGRADES
-                if currentSettings.AutoResearch and tick() - lastResearchTime >= 1.5 then
+                if not actionTaken and currentSettings.AutoResearch and tick() - lastResearchTime >= 1.5 then
                     pcall(function()
                                                 local currentRP = en.toNumber(en.convert(ReplicatedStorage.stats.currencies.rp.Value))
                         
@@ -437,37 +441,17 @@ task.spawn(function()
                             return a.Cost < b.Cost
                         end)
                         
-                        -- Buy exactly ONE research upgrade
+                        -- Buy exactly ONE research upgrade (No teleportation needed for research)
                         if #buyableResearch > 0 then
                             local bestResearch = buyableResearch[1]
                             local upgName = bestResearch.Name
                             local prevLvl = bestResearch.CurrentLevel
                             
-                            local rc = workspace:FindFirstChild("objects") and workspace.objects:FindFirstChild("research_center")
-                            local teleportSuccess = false
-                            if rc then
-                                print("[EverythingUpg] Teleporting to Research Center...")
-                                teleportSuccess = Resources.safeTeleport(rc:GetPivot() + Vector3.new(0, 3, 0))
-                            end
-                            
-                            -- Verify distance again to prevent server side distance kick/ban
-                            local char = LocalPlayer.Character
-                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                            local isClose = false
-                            if hrp and rc then
-                                if (hrp.Position - rc:GetPivot().Position).Magnitude < 15 then
-                                    isClose = true
-                                end
-                            end
-                            
-                            if isClose then
-                                print("[EverythingUpg] Buying Research Upgrade:", upgName, "Level:", prevLvl + 1, "Cost:", bestResearch.Cost)
-                                ReplicatedStorage.remotes.research_upgrade:FireServer(upgName, "max", token)
-                                lastResearchTime = tick()
-                                task.wait(0.2)
-                            else
-                                print("[EverythingUpg] Teleport failed or character too far from Research Center - Purchase cancelled")
-                            end
+                            print("[EverythingUpg] Buying Research Upgrade:", upgName, "Level:", prevLvl + 1, "Cost:", bestResearch.Cost)
+                            ReplicatedStorage.remotes.research_upgrade:FireServer(upgName, "max", token)
+                            lastResearchTime = tick()
+                            actionTaken = true
+                            task.wait(0.2)
                         end
                     end)
                 end
