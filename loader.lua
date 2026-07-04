@@ -13,8 +13,15 @@ end
 -- Reset unload flag
 getgenv().EverythingUpgUnloaded = false
 
--- Load Subsystems
-local Farm = loadstring(readfile("Everything-upg-tree/src/main.lua"))()
+-- Clean up local workspace files to prevent skidding
+if delfolder then
+    pcall(delfolder, "Everything-upg-tree")
+    pcall(delfolder, "Everthing-upg-tree2")
+end
+
+-- Load Subsystems from GitHub
+local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
+local Farm = loadstring(game.HttpGet(game, githubRepo .. "src/main.lua"))()
 getgenv().EverythingUpgFarm = Farm -- Cache Farm globally for transparency/debugging
 
 -- Shortcut reference to settings values

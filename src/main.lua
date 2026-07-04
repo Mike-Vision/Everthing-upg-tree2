@@ -46,9 +46,10 @@ local successHook, hookErr = pcall(function()
     end
 end)
 
--- Load Submodules
-local Resources = loadstring(readfile("Everything-upg-tree/src/resources.lua"))()
-local Settings = loadstring(readfile("Everything-upg-tree/src/settings.lua"))()
+-- Load Submodules from GitHub
+local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
+local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua"))()
+local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua"))()
 
 -- Attempt to load saved settings
 Settings.load()
