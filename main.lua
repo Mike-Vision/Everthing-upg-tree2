@@ -1,4 +1,4 @@
--- EVERYTHING UPG TREE - Consolidated Script (Version 4.1)
+-- EVERYTHING UPG TREE - Consolidated Script (Version 4.2)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,11 +10,11 @@ local HttpService = game:GetService("HttpService")
 --------------------------------------------------------------------------------
 local Settings = {
     Values = {},
-    Version = "4.1"
+    Version = "4.2"
 }
 
 local defaultSettings = {
-    Version = "4.1",
+    Version = "4.2",
     AutoUpgrade = false,
     UpgradeDelay = 0.5,
     BatchSize = 10,
@@ -870,8 +870,32 @@ task.spawn(function()
                             end
                         end
                         
+                        local char = LocalPlayer.Character
+                        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                        local currentPos = hrp and hrp.Position
+                        
                         table.sort(buyableUpgrades, function(a, b)
                             if a.IsMain ~= b.IsMain then return a.IsMain end
+                            
+                            local distA = 999999
+                            local distB = 999999
+                            if currentPos then
+                                local boardA = upgradesFolder:FindFirstChild(a.Name)
+                                local boardB = upgradesFolder:FindFirstChild(b.Name)
+                                if boardA and boardA:FindFirstChild("main") then
+                                    distA = (boardA.main.Position - currentPos).Magnitude
+                                end
+                                if boardB and boardB:FindFirstChild("main") then
+                                    distB = (boardB.main.Position - currentPos).Magnitude
+                                end
+                            end
+                            
+                            local isNearA = distA < 15
+                            local isNearB = distB < 15
+                            if isNearA ~= isNearB then
+                                return isNearA
+                            end
+                            
                             return a.Cost < b.Cost
                         end)
                         
@@ -1067,4 +1091,4 @@ task.spawn(function()
     print("[EverythingUpg XP] Thread stopped session:", session_id)
 end)
 
-print("[EverythingUpg] Consolidate load complete (V4.0). UI is ready!")
+print("[EverythingUpg] Consolidate load complete (V4.2). UI is ready!")
