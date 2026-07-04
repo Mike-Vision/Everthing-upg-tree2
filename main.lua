@@ -1,4 +1,4 @@
--- EVERYTHING UPG TREE - Consolidated Script (Version 4.0)
+-- EVERYTHING UPG TREE - Consolidated Script (Version 4.1)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,11 +10,11 @@ local HttpService = game:GetService("HttpService")
 --------------------------------------------------------------------------------
 local Settings = {
     Values = {},
-    Version = "4.0"
+    Version = "4.1"
 }
 
 local defaultSettings = {
-    Version = "4.0",
+    Version = "4.1",
     AutoUpgrade = false,
     UpgradeDelay = 0.5,
     BatchSize = 10,
@@ -1013,32 +1013,11 @@ task.spawn(function()
                             local upgName = bestResearch.Name
                             local prevLvl = bestResearch.CurrentLevel
                             
-                            local displayPart = rc:FindFirstChild("display", true)
-                            local char = LocalPlayer.Character
-                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                            if hrp and displayPart then
-                                if (hrp.Position - displayPart.Position).Magnitude > 15 then
-                                    print("[EverythingUpg] Teleporting to Research Center...")
-                                    Resources.safeTeleport(displayPart.CFrame + Vector3.new(0, 3, 0))
-                                end
-                            end
-                            
-                            local isClose = false
-                            if hrp and displayPart then
-                                if (hrp.Position - displayPart.Position).Magnitude < 15 then
-                                    isClose = true
-                                end
-                            end
-                            
-                            if isClose then
-                                print("[EverythingUpg] Buying Research Upgrade:", upgName, "Level:", prevLvl + 1, "Cost:", bestResearch.Cost)
-                                ReplicatedStorage.remotes.research_upgrade:FireServer(upgName, "max", token)
-                                lastResearchTime = tick()
-                                actionTaken = true
-                                task.wait(0.2)
-                            else
-                                print("[EverythingUpg] Teleport failed or too far from Research Center:", upgName, "- Purchase cancelled")
-                            end
+                            print("[EverythingUpg] Buying Research Upgrade:", upgName, "Level:", prevLvl + 1, "Cost:", bestResearch.Cost)
+                            ReplicatedStorage.remotes.research_upgrade:FireServer(upgName, "max", token)
+                            lastResearchTime = tick()
+                            actionTaken = true
+                            task.wait(0.2)
                         end
                     end)
                 end
