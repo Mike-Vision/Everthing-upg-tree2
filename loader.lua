@@ -8,20 +8,45 @@ if getgenv().Linoria_Window then
     pcall(function()
         getgenv().Linoria_Window:Unload()
     end)
+    getgenv().Linoria_Window = nil
+end
+
+-- Clean up existing Linoria ScreenGui by Name (prevents duplication)
+for _, child in ipairs(game:GetService("CoreGui"):GetChildren()) do
+    if child:IsA("ScreenGui") and child.Name == "EverythingUpgGui" then
+        pcall(function() child:Destroy() end)
+    end
+end
+local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+if PlayerGui then
+    for _, child in ipairs(PlayerGui:GetChildren()) do
+        if child:IsA("ScreenGui") and child.Name == "EverythingUpgGui" then
+            pcall(function() child:Destroy() end)
+        end
+    end
 end
 
 -- Reset unload flag
 getgenv().EverythingUpgUnloaded = false
 
--- Clean up local workspace files to prevent skidding
-if delfolder then
-    pcall(delfolder, "Everything-upg-tree")
-    pcall(delfolder, "Everthing-upg-tree2")
+local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
+local localPath = "Everthing-upg-tree2/"
+local useLocal = false
+if isfile and isfile(localPath .. "src/main.lua") then
+    useLocal = true
 end
 
--- Load Subsystems from GitHub
-local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
-local Farm = loadstring(game.HttpGet(game, githubRepo .. "src/main.lua?t=" .. os.time()))()
+local function getScript(path)
+    if useLocal then
+        print("[EverythingUpg] Loading local file:", path)
+        return readfile(localPath .. path)
+    else
+        return game.HttpGet(game, githubRepo .. path .. "?t=" .. os.time())
+    end
+end
+
+-- Load Subsystems
+local Farm = loadstring(getScript("src/main.lua"))()
 getgenv().EverythingUpgFarm = Farm -- Cache Farm globally for transparency/debugging
 
 -- Shortcut reference to settings values
@@ -39,6 +64,10 @@ local Window = Library:CreateWindow({
     AutoShow = true,
     TabPadding = 8
 })
+
+if Library.ScreenGui then
+    Library.ScreenGui.Name = "EverythingUpgGui"
+end
 
 getgenv().Linoria_Window = Window
 

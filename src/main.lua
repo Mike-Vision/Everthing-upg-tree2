@@ -3,11 +3,25 @@ local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
--- Load Submodules from GitHub
+-- Load Submodules (Hybrid local/remote)
 local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
-local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua?t=" .. os.time()))()
-local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua?t=" .. os.time()))()
-local CheckUpdate = loadstring(game.HttpGet(game, githubRepo .. "src/CheckUpdate.lua?t=" .. os.time()))()
+local localPath = "Everthing-upg-tree2/"
+local useLocal = false
+if isfile and isfile(localPath .. "src/main.lua") then
+    useLocal = true
+end
+
+local function getScript(path)
+    if useLocal then
+        return readfile(localPath .. path)
+    else
+        return game.HttpGet(game, githubRepo .. path .. "?t=" .. os.time())
+    end
+end
+
+local Resources = loadstring(getScript("src/resources.lua"))()
+local Settings = loadstring(getScript("src/settings.lua"))()
+local CheckUpdate = loadstring(getScript("src/CheckUpdate.lua"))()
 
 -- Attempt to load saved settings
 Settings.load()
