@@ -7,6 +7,7 @@ local TweenService = game:GetService("TweenService")
 local githubRepo = "https://raw.githubusercontent.com/Mike-vision/Everthing-upg-tree2/main/"
 local Resources = loadstring(game.HttpGet(game, githubRepo .. "src/resources.lua"))()
 local Settings = loadstring(game.HttpGet(game, githubRepo .. "src/settings.lua"))()
+local CheckUpdate = loadstring(game.HttpGet(game, githubRepo .. "src/CheckUpdate.lua"))()
 
 -- Attempt to load saved settings
 Settings.load()
@@ -625,6 +626,8 @@ task.spawn(function()
     end
     print("[EverythingUpg XP] Thread stopped session:", session_id)
 end)
+
+CheckUpdate.start(Settings.Version, getgenv().Linoria_Library)
 
 return {
     Settings = Settings,
