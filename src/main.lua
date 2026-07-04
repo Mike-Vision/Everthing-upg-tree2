@@ -57,7 +57,7 @@ Settings.load()
 local en = require(ReplicatedStorage.modules.en)
 
 -- Helper functions for currency validation
-local function canAffordCost(costRes, Resources)
+local function canAffordCost(costRes, Resources, savings, isUnlockUpgrade)
     if type(costRes) ~= "table" then
         return true
     end
@@ -72,6 +72,13 @@ local function canAffordCost(costRes, Resources)
         local requiredAmount = en.toNumber(en.convert(costAmount))
         if playerAmount < requiredAmount then
             return false
+        end
+
+        -- Apply savings limit if this is a normal upgrade (maxLvl > 1) to prioritize unlocks
+        if not isUnlockUpgrade and savings and savings[curObj.Name] then
+            if playerAmount - requiredAmount < savings[curObj.Name] then
+                return false
+            end
         end
     end
     
@@ -178,6 +185,46 @@ task.spawn(function()
                     local upgradesFolder = workspace:FindFirstChild("upgrades")
                     if upgradesFolder then
                         local rawList = upgradesFolder:GetChildren()
+                        -- Phase 1: Pre-calculate savings targets for unlock upgrades (maxLvl == 1)
+                        local savings = {}
+                        for _, upg in ipairs(rawList) do
+                            local upgName = upg.Name
+                            local configMod = upg:FindFirstChild("config")
+                            local currentLvlVal = ReplicatedStorage.stats.upgrades:FindFirstChild(upgName)
+                            if configMod and currentLvlVal then
+                                local success, cfg = pcall(require, configMod)
+                                if success and cfg and Resources.isSafeBoard(cfg) then
+                                    local isVisible = true
+                                    if cfg.visibility then
+                                        local okVis, visVal = pcall(cfg.visibility)
+                                        if okVis and visVal == false then isVisible = false end
+                                    end
+                                    if isVisible then
+                                        local currentLvl = currentLvlVal.Value
+                                        local maxLvl = cfg.max and (type(cfg.max) == "function" and cfg.max() or cfg.max) or 1
+                                        if currentLvl < maxLvl and maxLvl == 1 then
+                                            local ok, costRes = pcall(cfg.can_buy, currentLvl, maxLvl, false)
+                                            if ok and costRes ~= false and costRes ~= nil then
+                                                local okMax, costResMax = pcall(cfg.can_buy, currentLvl, maxLvl, true)
+                                                local finalCostRes = (okMax and costResMax) or costRes
+                                                if type(finalCostRes) == "table" then
+                                                    for currencySymbol, costAmount in pairs(finalCostRes) do
+                                                        local curObj = Resources.getCurrencyObject(currencySymbol)
+                                                        if curObj then
+                                                            local costNum = en.toNumber(en.convert(costAmount))
+                                                            if not savings[curObj.Name] or costNum < savings[curObj.Name] then
+                                                                savings[curObj.Name] = costNum
+                                                            end
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
                         local buyableUpgrades = {}
                         local now = tick()
                         
@@ -210,7 +257,7 @@ task.spawn(function()
                                                 if ok and costRes ~= false and costRes ~= nil then
                                                     local okMax, costResMax = pcall(cfg.can_buy, currentLvl, maxLvl, true)
                                                     local finalCostRes = (okMax and costResMax) or costRes
-                                                    if canAffordCost(finalCostRes, Resources) then
+                                                    if canAffordCost(finalCostRes, Resources, savings, maxLvl == 1) then
                                                         local costVal = getCostValue(finalCostRes, currentLvl)
                                                         local isMain = hasCurrencyRequirement(finalCostRes, "P")
                                                         table.insert(buyableUpgrades, {
@@ -290,7 +337,52 @@ task.spawn(function()
                 -- 3. AUTO RESEARCH UPGRADES
                 if currentSettings.AutoResearch and tick() - lastResearchTime >= 1.5 then
                     pcall(function()
-                        local currentRP = en.toNumber(en.convert(ReplicatedStorage.stats.currencies.rp.Value))
+                                                local currentRP = en.toNumber(en.convert(ReplicatedStorage.stats.currencies.rp.Value))
+                        
+                        -- Phase 1: Pre-calculate savings targets for research unlock upgrades (maxLvl == 1)
+                        local savings = {}
+                        for upgName, cfg in pairs(game_data.research) do
+                            local currentLvlVal = ReplicatedStorage.stats.research_upgrades:FindFirstChild(upgName)
+                            if currentLvlVal then
+                                local isVisible = true
+                                if cfg.when_to_show then
+                                    local okShow, showVal = pcall(cfg.when_to_show)
+                                    if okShow and showVal == false then
+                                        isVisible = false
+                                    end
+                                end
+                                
+                                if isVisible then
+                                    local currentLvl = currentLvlVal.Value
+                                    local maxLvl = cfg.max
+                                    if type(maxLvl) == "function" then
+                                        maxLvl = maxLvl()
+                                    elseif not maxLvl then
+                                        maxLvl = 1
+                                    end
+                                    
+                                    if currentLvl < maxLvl and maxLvl == 1 then
+                                        local ok, costRes = pcall(cfg.can_buy, currentLvl, maxLvl, false)
+                                        if ok and costRes ~= false and costRes ~= nil then
+                                            local okMax, costResMax = pcall(cfg.can_buy, currentLvl, maxLvl, true)
+                                            local finalCostRes = (okMax and costResMax) or costRes
+                                            if type(finalCostRes) == "table" then
+                                                for currencySymbol, costAmount in pairs(finalCostRes) do
+                                                    local curObj = Resources.getCurrencyObject(currencySymbol)
+                                                    if curObj then
+                                                        local costNum = en.toNumber(en.convert(costAmount))
+                                                        if not savings[curObj.Name] or costNum < savings[curObj.Name] then
+                                                            savings[curObj.Name] = costNum
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
                         local buyableResearch = {}
                         
                         for upgName, cfg in pairs(game_data.research) do
@@ -319,7 +411,7 @@ task.spawn(function()
                                             local okMax, costResMax = pcall(cfg.can_buy, currentLvl, maxLvl, true)
                                             local finalCostRes = (okMax and costResMax) or costRes
                                             
-                                            if canAffordCost(finalCostRes, Resources) then
+                                            if canAffordCost(finalCostRes, Resources, savings, maxLvl == 1) then
                                                 local costVal = getCostValue(finalCostRes, currentLvl)
                                                 local isMain = hasCurrencyRequirement(finalCostRes, "RP")
                                                 table.insert(buyableResearch, {
