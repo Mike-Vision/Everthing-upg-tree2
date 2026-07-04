@@ -252,24 +252,15 @@ task.spawn(function()
                 -- 1. AUTO CONVERT (PRESTIGE)
                 if currentSettings.AutoConvert and tick() - lastUpgradeTime >= currentSettings.UpgradeDelay then
                     pcall(function()
-                        local rc = workspace:FindFirstChild("objects") and workspace.objects:FindFirstChild("research_center")
-                        local gainLabel = rc and rc:FindFirstChild("new", true) and rc.new:FindFirstChild("gain", true)
-                        if gainLabel then
-                            local text = gainLabel.Text
-                            -- Text format: "720.17k ₱ -> 14.69 λ"
-                            local pendingStr = text:match("%->%s*([%d%.%a]+)")
-                            if pendingStr then
-                                local pendingNum = en.toNumber(en.convert(pendingStr))
-                                if pendingNum >= currentSettings.MinConvertLambda then
-                                    print("[EverythingUpg] Teleporting to Research Center for Conversion...")
-                                    Resources.safeTeleport(rc:GetPivot() + Vector3.new(0, 3, 0))
-                                    
-                                    print("[EverythingUpg] Auto Converting at pending Lambda:", pendingNum)
-                                    ReplicatedStorage.remotes.research_convert:FireServer()
-                                    lastUpgradeTime = tick()
-                                    actionTaken = true
-                                    task.wait(0.5)
-                                end
+                        local gainResetValObj = ReplicatedStorage:FindFirstChild("temp") and ReplicatedStorage.temp:FindFirstChild("s_gain_reset")
+                        if gainResetValObj then
+                            local pendingNum = en.toNumber(en.convert(gainResetValObj.Value))
+                            if pendingNum >= currentSettings.MinConvertLambda then
+                                print("[EverythingUpg] Auto Converting at pending Lambda:", pendingNum)
+                                ReplicatedStorage.remotes.research_convert:FireServer()
+                                lastUpgradeTime = tick()
+                                actionTaken = true
+                                task.wait(0.5)
                             end
                         end
                     end)
