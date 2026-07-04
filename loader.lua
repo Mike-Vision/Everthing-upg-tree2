@@ -167,6 +167,7 @@ local pointsLabel = StatusGroup:AddLabel("Points: --")
 local lambdaLabel = StatusGroup:AddLabel("Lambda (λ): --")
 local pendingLambdaLabel = StatusGroup:AddLabel("Pending Lambda: --")
 local tokenStatusLabel = StatusGroup:AddLabel("Token Status: Scanning...")
+local otherCurrenciesLabel = StatusGroup:AddLabel("Other Currencies: None")
 
 -- Anti-Cheat & Protection Settings
 local AntiCheatToggle = AntiGroup:AddToggle("DisableAntiCheatToggle", {
@@ -267,6 +268,36 @@ task.spawn(function()
             
             -- Update Token Status
             tokenStatusLabel:SetText("Token Status: " .. tostring(SettingsValues.TokenStatus))
+            
+            -- Update Other Currencies and Materials dynamically
+            local activeCurrencies = {}
+            local currenciesFolder = ReplicatedStorage:FindFirstChild("stats") and ReplicatedStorage.stats:FindFirstChild("currencies")
+            if currenciesFolder then
+                for _, cur in ipairs(currenciesFolder:GetChildren()) do
+                    if cur.Name ~= "pts" and cur.Name ~= "rp" then
+                        local val = en.convert(cur.Value)
+                        if en.toNumber(val) > 0 then
+                            table.insert(activeCurrencies, cur.Name:upper() .. ": " .. en.short(val))
+                        end
+                    end
+                end
+            end
+            
+            local materialsFolder = ReplicatedStorage:FindFirstChild("stats") and ReplicatedStorage.stats:FindFirstChild("materials")
+            if materialsFolder then
+                for _, mat in ipairs(materialsFolder:GetChildren()) do
+                    local val = en.convert(mat.Value)
+                    if en.toNumber(val) > 0 then
+                        table.insert(activeCurrencies, mat.Name:upper() .. ": " .. en.short(val))
+                    end
+                end
+            end
+            
+            if #activeCurrencies > 0 then
+                otherCurrenciesLabel:SetText("Other Currencies:\n" .. table.concat(activeCurrencies, "\n"))
+            else
+                otherCurrenciesLabel:SetText("Other Currencies: None")
+            end
         end)
         if not success or getgenv().EverythingUpgUnloaded then
             -- Stop thread if UI is unloaded
