@@ -3,7 +3,7 @@ local HttpService = game:GetService("HttpService")
 local SettingsModule = {}
 
 local defaultSettings = {
-    Version = "2.7",
+    Version = "2.8",
     AutoUpgrade = false,
     UpgradeDelay = 0.5,
     BatchSize = 10,
@@ -20,7 +20,7 @@ local defaultSettings = {
 }
 
 SettingsModule.Values = {}
-SettingsModule.Version = "2.7"
+SettingsModule.Version = "2.8"
 
 -- Initialize with defaults
 for k, v in pairs(defaultSettings) do

@@ -73,12 +73,61 @@ LocalPlayer.Idled:Connect(function()
 end)
 
 -- Moderator / Player Detection Setup
+local function shouldKick(player)
+    if player == LocalPlayer then return false end
+    
+    -- If it's a private server, kick on ANY player joining!
+    if game.PrivateServerId ~= "" or game.PrivateServerOwnerId ~= 0 then
+        return true
+    end
+    
+    -- If it's a public server, check if the player is a Moderator/Staff of the game group (Omegauspicious Games)
+    local success, rank = pcall(function()
+        return player:GetRankInGroup(33959123)
+    end)
+    if success and rank then
+        if rank >= 10 then return true end
+        
+        local success2, role = pcall(function()
+            return player:GetRoleInGroup(33959123)
+        end)
+        if success2 and role then
+            local r = role:lower()
+            if r:find("mod") or r:find("admin") or r:find("staff") or r:find("helper") or r:find("dev") or r:find("owner") or r:find("creator") or r:find("manager") then
+                return true
+            end
+        end
+    end
+    
+    return false
+end
+
 local function checkPlayers()
     if Settings and Settings.Values and Settings.Values.ModDetection then
+        -- 1. Check player list
         for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then
-                LocalPlayer:Kick("Security: Another player detected in your private session.")
-                break
+            if shouldKick(p) then
+                LocalPlayer:Kick("Security: Moderator / Player " .. p.Name .. " detected in session.")
+                return
+            end
+        end
+        
+        -- 2. Check for ghost/vanished players in workspace (characters with no player instance)
+        for _, child in ipairs(workspace:GetChildren()) do
+            if child:IsA("Model") and child:FindFirstChildOfClass("Humanoid") and child.Name ~= LocalPlayer.Name then
+                local p = Players:GetPlayerFromCharacter(child)
+                if not p then
+                    LocalPlayer:Kick("Security: Ghost spectator detected in workspace.")
+                    return
+                end
+            end
+        end
+        
+        -- 3. Check for suspicious spectate cameras in workspace
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Camera") and obj ~= workspace.CurrentCamera then
+                LocalPlayer:Kick("Security: Suspicious spectate camera detected.")
+                return
             end
         end
     end
@@ -86,8 +135,8 @@ end
 
 Players.PlayerAdded:Connect(function(p)
     task.wait(0.5)
-    if Settings and Settings.Values and Settings.Values.ModDetection and p ~= LocalPlayer then
-        LocalPlayer:Kick("Security: Player " .. p.Name .. " joined your private session.")
+    if Settings and Settings.Values and Settings.Values.ModDetection and shouldKick(p) then
+        LocalPlayer:Kick("Security: Moderator / Player " .. p.Name .. " joined session.")
     end
 end)
 
